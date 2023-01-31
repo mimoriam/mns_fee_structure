@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'dart:io';
 
@@ -21,6 +19,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:docx_template/docx_template.dart';
 import 'package:number_to_character/number_to_character.dart';
+// import 'package:syncfusion_flutter_pdf/pdf.dart';
 
 extension StringExtension on String {
   String toCapitalized() =>
@@ -71,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
 
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('dd/MM/yyyy').format(now);
+    String formattedDashedDate = DateFormat('yyyy-MM-dd').format(now);
 
     var converter = NumberToCharacterConverter('en');
     var v = converter
@@ -86,26 +86,35 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
       ..add(TextContent('r', '${_formKey.currentState?.fields['roll']?.value}'))
       ..add(TextContent('n', '${_formKey.currentState?.fields['name']?.value}'))
       ..add(TextContent(
-          'fN', '${_formKey.currentState?.fields['amount']?.value}'))
-      ..add(
-          TextContent('t', '${_formKey.currentState?.fields['amount']?.value}'))
+          'fN', '${_formKey.currentState?.fields['amount']?.value}.00'))
+      ..add(TextContent(
+          't', '${_formKey.currentState?.fields['amount']?.value}.00'))
       ..add(TextContent('feeW', '${v.toTitleCase()} Rupees Only'));
 
     final d = await docx.generate(c);
-    final of = File("test.docx");
+    final of = File(
+        "exports\\${formattedDashedDate}_${_formKey.currentState?.fields['roll']?.value}.docx");
 
     if (d != null) {
       await of.writeAsBytes(d);
     }
+
+    // await Future.delayed(const Duration(seconds: 2));
+    // Generate PDF document after success:
+    // final PdfDocument document = PdfDocument(inputBytes: of.readAsBytesSync());
+    // final PdfDocument document = PdfDocument(inputBytes: of.readAsBytesSync());
+
+    // await of.writeAsBytes(await document.save());
+
+    // File("exports\\${formattedDashedDate}_${_formKey.currentState?.fields['roll']?.value}.pdf")
+    //     .writeAsBytes(await document.save());
+    // document.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     @override
-    Future<void> onWindowFocus() async {
-      // Make sure to call once for Window to show when maximized.
-      setState(() {});
-    }
+    Future<void> onWindowFocus() async => setState(() {});
 
     return Scaffold(
       body: SafeArea(
@@ -115,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
             Expanded(
               child: SingleChildScrollView(
                 child: FormBuilder(
-                  autovalidateMode: AutovalidateMode.always,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   key: _formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -154,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
                         height: MediaQuery.of(context).size.height * 0.02,
                       ),
                       FormBuilderTextField(
+                        keyboardType: TextInputType.number,
                         name: 'semester',
                         decoration: InputDecoration(
                           labelText: 'Semester',
@@ -161,12 +171,23 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
                             borderRadius: BorderRadius.circular(20.0),
                           ),
                         ),
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                          FormBuilderValidators.minLength(1),
+                          FormBuilderValidators.maxLength(1),
+                          FormBuilderValidators.numeric(),
+                        ]),
                       ),
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.004,
                       ),
                       FormBuilderTextField(
+                        keyboardType: TextInputType.number,
                         name: 'challan',
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                          FormBuilderValidators.numeric(),
+                        ]),
                         decoration: InputDecoration(
                           labelText: 'Challan No.',
                           border: OutlineInputBorder(
@@ -179,6 +200,9 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
                       ),
                       FormBuilderTextField(
                         name: 'roll',
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                        ]),
                         decoration: InputDecoration(
                           labelText: 'Roll No.',
                           border: OutlineInputBorder(
@@ -191,6 +215,9 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
                       ),
                       FormBuilderTextField(
                         name: 'name',
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                        ]),
                         decoration: InputDecoration(
                           labelText: 'Name of Student',
                           border: OutlineInputBorder(
@@ -204,6 +231,10 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
                       FormBuilderTextField(
                         keyboardType: TextInputType.number,
                         name: 'amount',
+                        validator: FormBuilderValidators.compose([
+                          FormBuilderValidators.required(),
+                          FormBuilderValidators.numeric(),
+                        ]),
                         decoration: InputDecoration(
                           labelText: 'Amount of Fee',
                           border: OutlineInputBorder(
