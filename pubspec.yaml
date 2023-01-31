@@ -48,6 +48,7 @@ dependencies:
 
   docx_template: ^0.3.3
   window_manager: ^0.3.0
+  number_to_character: ^0.0.12
 
 dependency_overrides:
     archive: 3.3.0
@@ -73,6 +74,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

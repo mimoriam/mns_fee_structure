@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:io';
 
@@ -8,16 +10,27 @@ import 'dart:io';
 /// Widgets:
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:intl/intl.dart';
 
 /// Services:
 
 /// State:
 
 /// Utils/Helpers:
-import 'package:responsive_builder/responsive_builder.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:docx_template/docx_template.dart';
+import 'package:number_to_character/number_to_character.dart';
+
+extension StringExtension on String {
+  String toCapitalized() =>
+      length > 0 ? '${this[0].toUpperCase()}${substring(1).toLowerCase()}' : '';
+
+  String toTitleCase() => replaceAll(RegExp(' +'), ' ')
+      .split(' ')
+      .map((str) => str.toCapitalized())
+      .join(' ');
+}
 
 /// Entry Point:
 class HomeScreen extends StatefulWidget {
@@ -31,10 +44,13 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
   final dataDir = Directory.current.path;
   final _formKey = GlobalKey<FormBuilderState>();
 
+  final successSnackBar = const SnackBar(content: Text('File saved'));
+  final failedSnackBar =
+      const SnackBar(content: Text('Failed. Please input all values!'));
+
   @override
   void initState() {
     windowManager.addListener(this);
-    // createRequiredFolders();
     super.initState();
   }
 
@@ -53,9 +69,27 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
     final f = File('$dataDir\\data\\fee_structure.docx');
     final docx = await DocxTemplate.fromBytes(await f.readAsBytes());
 
-    Content c = Content();
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('dd/MM/yyyy').format(now);
 
-    c..add(TextContent("r", "2019-cs-20"));
+    var converter = NumberToCharacterConverter('en');
+    var v = converter
+        .convertInt(int.parse(_formKey.currentState?.fields['amount']?.value));
+
+    Content c = Content();
+    c
+      ..add(TextContent(
+          's', '${_formKey.currentState?.fields['semester']?.value}'))
+      ..add(TextContent(
+          'c', '${_formKey.currentState?.fields['challan']?.value}'))
+      ..add(TextContent('d', formattedDate))
+      ..add(TextContent('r', '${_formKey.currentState?.fields['roll']?.value}'))
+      ..add(TextContent('n', '${_formKey.currentState?.fields['name']?.value}'))
+      ..add(TextContent(
+          'fN', '${_formKey.currentState?.fields['amount']?.value}'))
+      ..add(
+          TextContent('t', '${_formKey.currentState?.fields['amount']?.value}'))
+      ..add(TextContent('feeW', '${v.toTitleCase()} Rupees Only'));
 
     final d = await docx.generate(c);
     final of = File("test.docx");
@@ -75,54 +109,131 @@ class _HomeScreenState extends State<HomeScreen> with WindowListener {
 
     return Scaffold(
       body: SafeArea(
-        child: ScreenTypeLayout.builder(
-          mobile: (BuildContext context) {
-            return OrientationLayoutBuilder(
-              // Force a screen to stay in portrait/landscape. Overrides the OrientationLayoutBuilder
-              // mode: OrientationLayoutBuilderMode.portrait,
-              portrait: (context) => Container(),
-              landscape: (context) => Container(),
-            );
-          },
-          tablet: (BuildContext context) {
-            return OrientationLayoutBuilder(
-              portrait: (context) => Container(),
-              landscape: (context) => Container(),
-            );
-          },
-          desktop: (BuildContext context) => Flex(
-            direction: Axis.horizontal,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(2.0),
-                    child: FormBuilder(
-                      autovalidateMode: AutovalidateMode.always,
-                      key: _formKey,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FormBuilderTextField(
-                            name: 'roll',
-                            decoration: InputDecoration(
-                              labelText: 'Roll Number',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
+        child: Flex(
+          direction: Axis.horizontal,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: FormBuilder(
+                  autovalidateMode: AutovalidateMode.always,
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        // rgb(38, 40, 149)
+                        height: MediaQuery.of(context).size.height * 0.08,
+                        // height: 50,
+                        decoration: const BoxDecoration(
+                          color: Color.fromRGBO(38, 40, 149, 1),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(80.0),
+                            bottomRight: Radius.circular(80.0),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('images/logo.png'),
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.01,
+                            ),
+                            Text(
+                              "Muhammad Nawaz Sharif \nUniversity of Engineering\n & Technology, Multan",
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.010,
+                                // fontSize: 14,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.004,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.02,
+                      ),
+                      FormBuilderTextField(
+                        name: 'semester',
+                        decoration: InputDecoration(
+                          labelText: 'Semester',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.004,
+                      ),
+                      FormBuilderTextField(
+                        name: 'challan',
+                        decoration: InputDecoration(
+                          labelText: 'Challan No.',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.004,
+                      ),
+                      FormBuilderTextField(
+                        name: 'roll',
+                        decoration: InputDecoration(
+                          labelText: 'Roll No.',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.004,
+                      ),
+                      FormBuilderTextField(
+                        name: 'name',
+                        decoration: InputDecoration(
+                          labelText: 'Name of Student',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.004,
+                      ),
+                      FormBuilderTextField(
+                        keyboardType: TextInputType.number,
+                        name: 'amount',
+                        decoration: InputDecoration(
+                          labelText: 'Amount of Fee',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.004,
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          _formKey.currentState?.save();
+                          if (_formKey.currentState!.validate()) {
+                            saveFileToDisk();
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(successSnackBar);
+                          } else {
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(failedSnackBar);
+                          }
+                        },
+                        child: const Text("Submit"),
+                      )
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
