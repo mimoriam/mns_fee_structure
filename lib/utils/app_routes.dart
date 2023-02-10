@@ -21,7 +21,8 @@ final GoRouter goRouter = GoRouter(
     GoRoute(
       name: 'home',
       path: '/',
-      builder: (BuildContext context, GoRouterState state) => const HomeScreen(),
+      builder: (BuildContext context, GoRouterState state) =>
+          const SplashScreen(),
     ),
   ],
   // errorBuilder: (context, state) => ErrorScreen(state.error),
